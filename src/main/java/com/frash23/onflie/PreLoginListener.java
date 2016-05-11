@@ -73,7 +73,6 @@ public class PreLoginListener implements Listener {
 	}
 
 	private static long binaryLong(String in) {
-		System.out.println(in.substring(0, 1).equals("1"));
 		return in.substring(0, 1).equals("1")
 			? Long.parseLong(in.substring(1), 2) + Long.MIN_VALUE
 			: Long.parseLong(in, 2);
