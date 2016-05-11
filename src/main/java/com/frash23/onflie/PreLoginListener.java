@@ -34,8 +34,7 @@ public class PreLoginListener implements Listener {
 
 			if(urlConn.getResponseCode() == 204) {
 
-				conn.setUniqueId( nameToOnflieId(username) );
-				System.out.println("Set offline UUID");
+				conn.setUniqueId( onflieId(username) );
 
 			/* If the username is valid and shows up on mojang's servers, assume it's valid */
 			} else conn.setOnlineMode(true);
@@ -46,33 +45,38 @@ public class PreLoginListener implements Listener {
 		e.completeIntent(plugin);
 	}
 
-	/* 96 zeros we use to prefix and substring with */
-	final private static String zeroPrefix = "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-	final private static String nameArray = "abcdefghijklmnopqrstuvwxyz0123456789_";
-	private UUID offlineUuid(String name) {
-		BigInteger bint = new BigInteger( new byte[16] );
-//		bint.mask & 0x3F;
+	final private static String babecafe = "10111010101111101100101011111110";
+	final private static String nameChars = " abcdefghijklmnopqrstuvwxyz0123456789_";
+	private UUID onflieId(String name) {
 
-		return null;
-	}
+		name = "             " + name.toLowerCase();
+		name = name.substring( name.length() - 16 );
 
-	private UUID nameToOnflieId(String name) {
-		String encodedName = "";
-		for( char c : name.toCharArray() ) {
-			String binString = zeroPrefix + Integer.toBinaryString( nameArray.indexOf(c) );
-			encodedName += binString.substring( binString.length() - 6 );
+		String mostSigString = babecafe;
+		String leastSigString = "";
+		long mostSigBits = 0xBABECAFE;
+		long leastSigBits = 0;
+
+		for(byte i=0; i<16; i++) {
+			String toAdd = "00000" + Integer.toBinaryString( nameChars.indexOf( name.charAt(i) ) );
+			toAdd = toAdd.substring( toAdd.length() - 6 );
+
+			if( mostSigString.length() < 61 ) mostSigString += toAdd;
+			else if( mostSigString.length() >= 64 ) leastSigString += toAdd;
+			else if( mostSigString.length() == 62 ) {
+				mostSigString += toAdd.substring(0, 2);
+				leastSigString += toAdd.substring(2);
+			}
 		}
 
-		/* Prepend 95 zeros and truncate everything except the last 96 digits.
-		 * This way the length of the name doesn't matter */
-		encodedName = zeroPrefix + encodedName;
-		encodedName = encodedName.substring( encodedName.length() - 96 );
-		String encodedNameHex = new BigInteger(encodedName, 2).toString(16);
-		String rawUuid = "BABECAFE" + encodedNameHex;
-		String hyphenated = rawUuid.replaceFirst( "([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)", "$1-$2-$3-$4-$5" );
-
-		return UUID.fromString(hyphenated);
+		return new UUID( binaryLong(mostSigString), binaryLong(leastSigString) );
 	}
 
+	private static long binaryLong(String in) {
+		System.out.println(in.substring(0, 1).equals("1"));
+		return in.substring(0, 1).equals("1")
+			? Long.parseLong(in.substring(1), 2) + Long.MIN_VALUE
+			: Long.parseLong(in, 2);
+	}
 
 }
