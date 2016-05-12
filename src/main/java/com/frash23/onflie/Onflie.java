@@ -21,7 +21,8 @@ public class Onflie extends Plugin {
 		}
 
 		System.out.println("hello friends what is up!!");
-		//getProxy().getPluginManager().registerListener( this, new PreLoginListener(this) );
+		getProxy().getPluginManager().registerListener( this, new PreLoginListener(this) );
+		getProxy().getPluginManager().registerListener( this, new DebugListener(this) );
 	}
 
 	private void injectListener(int version) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {

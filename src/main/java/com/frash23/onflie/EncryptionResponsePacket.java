@@ -20,6 +20,7 @@ import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.LoginRequest;
 
 import javax.crypto.SecretKey;
+import javax.management.RuntimeErrorException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,6 +56,7 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 
 		EncryptionRequest request = (EncryptionRequest)requestField.get(handler);
 		ChannelWrapper ch = (ChannelWrapper)chField.get(handler);
+		InitialHandler conn = (InitialHandler)handler; /* CHECK THIS PROBABLY */
 		//Preconditions.checkState( (InitialHandler.State)thisStateField.get(handler), "Not expecting ENCRYPT" );
 
 		SecretKey sharedKey = EncryptionUtil.getSecret(this, request);
@@ -63,7 +65,7 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 		BungeeCipher encrypt = EncryptionUtil.getCipher(true, sharedKey);
 		ch.addBefore( PipelineUtils.FRAME_DECODER, PipelineUtils.ENCRYPT_HANDLER, new CipherEncoder(encrypt) );
 
-		String encName = URLEncoder.encode( ((InitialHandler)handler).getName(), "UTF-8" );
+		String encName = URLEncoder.encode( conn.getName(), "UTF-8" );
 
 		MessageDigest sha = MessageDigest.getInstance("SHA-1");
 		byte[][] bits = new byte[][] {
@@ -79,28 +81,33 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 		Callback<String> httpHandler = new Callback<String>() {
 			@Override public void done(String result, Throwable error) {
 
-				System.out.println();
-				System.out.println();
-				System.out.println();
-				System.out.println(result);
-				System.out.println();
-				System.out.println();
-				System.out.println();
+				System.out.println( error == null? "Setting online" : "OFFLINE D: D:D :D");
+				if(error == null) {
+					/* Handle online users */
+					System.out.println("Got response");
+					LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
+					try {
+						loginProfileField.set(handler, obj);
+						//conn.setOnlineMode(true);
+						uniqueIdField.set(handler, Util.getUUID(obj.getId()));
 
-				LoginResult obj = BungeeCord.getInstance().gson.fromJson( result, LoginResult.class );
-				try {
-					loginProfileField.set(handler, obj);
-					uniqueIdField.set( handler, Util.getUUID( obj.getId() ) );
+						System.out.println("Finishing login");
+						finishMethod.invoke(handler);
+					} catch (IllegalAccessException | InvocationTargetException e) { /* HANDLE THIS PLEASE */ }
 
-					finishMethod.invoke(handler);
-				} catch(IllegalAccessException | InvocationTargetException e) { /* HANDLE THIS PLEASE */ }
+				} else {
+					/* Handle offline users */
+
+					System.out.println("Error while getting auth result: " + error);
+					try {
+						uniqueIdField.set(handler, OnflieIdUtil.onflieId(conn.getName()));
+					} catch(IllegalAccessException e) { /* HANDLE THIS MAYBE???? */ }
+				}
 
 			}
 		};
 
 		HttpClient.get( authURL, ch.getHandle().eventLoop(), httpHandler );
-
-		//handler.handle( this );
 	}
 
 	private void setAccessibility() {
