@@ -78,34 +78,32 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 
 		String authURL = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + encName + "&serverId=" + encodedHash;
 
-		Callback<String> httpHandler = new Callback<String>() {
-			@Override public void done(String result, Throwable error) {
+		Callback<String> httpHandler = (result, error) -> {
 
-				System.out.println( error == null? "Setting online" : "OFFLINE D: D:D :D");
-				if(error == null) {
-					/* Handle online users */
-					System.out.println("Got response");
-					LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
-					try {
-						loginProfileField.set(handler, obj);
-						//conn.setOnlineMode(true);
-						uniqueIdField.set(handler, Util.getUUID(obj.getId()));
+            System.out.println( error == null? "Setting online" : "OFFLINE D: D:D :D");
+            if(error == null) {
+                /* Handle online users */
+                System.out.println("Got response");
+                LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
+                try {
+                    loginProfileField.set(handler, obj);
+                    //conn.setOnlineMode(true);
+                    uniqueIdField.set(handler, Util.getUUID(obj.getId()));
 
-						System.out.println("Finishing login");
-						finishMethod.invoke(handler);
-					} catch (IllegalAccessException | InvocationTargetException e) { /* HANDLE THIS PLEASE */ }
+                    System.out.println("Finishing login");
+                    finishMethod.invoke(handler);
+                } catch (IllegalAccessException | InvocationTargetException e) { /* HANDLE THIS PLEASE */ }
 
-				} else {
-					/* Handle offline users */
+            } else {
+                /* Handle offline users */
 
-					System.out.println("Error while getting auth result: " + error);
-					try {
-						uniqueIdField.set(handler, OnflieIdUtil.onflieId(conn.getName()));
-					} catch(IllegalAccessException e) { /* HANDLE THIS MAYBE???? */ }
-				}
+                System.out.println("Error while getting auth result: " + error);
+                try {
+                    uniqueIdField.set(handler, OnflieIdUtil.onflieId(conn.getName()));
+                } catch(IllegalAccessException e) { /* HANDLE THIS MAYBE???? */ }
+            }
 
-			}
-		};
+        };
 
 		HttpClient.get( authURL, ch.getHandle().eventLoop(), httpHandler );
 	}
