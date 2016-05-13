@@ -18,6 +18,7 @@ public class DebugListener implements Listener {
         e.registerIntent(plugin);
         PendingConnection conn = e.getConnection();
         System.out.println( conn.getName() + " joined with UUID " + conn.getUniqueId().toString() );
+        System.out.println( conn.getName() + "'s online-mode is: " + conn.isOnlineMode() );
 
         e.completeIntent(plugin);
     }

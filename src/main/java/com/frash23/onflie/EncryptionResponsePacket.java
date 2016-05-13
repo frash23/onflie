@@ -28,6 +28,8 @@ import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 
+import static net.md_5.bungee.BungeeCord.getInstance;
+
 public class EncryptionResponsePacket extends EncryptionResponse {
 
 	static Field requestField;
@@ -57,7 +59,8 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 		EncryptionRequest request = (EncryptionRequest)requestField.get(handler);
 		ChannelWrapper ch = (ChannelWrapper)chField.get(handler);
 		InitialHandler conn = (InitialHandler)handler; /* CHECK THIS PROBABLY */
-		//Preconditions.checkState( (InitialHandler.State)thisStateField.get(handler), "Not expecting ENCRYPT" );
+
+		Preconditions.checkState( thisStateField.get(handler).toString().equals("ENCRYPT"), "Not expecting ENCRYPT" );
 
 		SecretKey sharedKey = EncryptionUtil.getSecret(this, request);
 		BungeeCipher decrypt = EncryptionUtil.getCipher(false, sharedKey);
@@ -80,28 +83,25 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 
 		Callback<String> httpHandler = (result, error) -> {
 
-            System.out.println( error == null? "Setting online" : "OFFLINE D: D:D :D");
-            if(error == null) {
-                /* Handle online users */
-                System.out.println("Got response");
-                LoginResult obj = BungeeCord.getInstance().gson.fromJson(result, LoginResult.class);
-                try {
-                    loginProfileField.set(handler, obj);
-                    //conn.setOnlineMode(true);
+			try {
+				if (error == null) { /* Assume player is online */
+					LoginResult obj = getInstance().gson.fromJson(result, LoginResult.class);
+					loginProfileField.set(handler, obj);
+                    if( !conn.isOnlineMode() ) conn.setOnlineMode(true);
                     uniqueIdField.set(handler, Util.getUUID(obj.getId()));
 
-                    System.out.println("Finishing login");
                     finishMethod.invoke(handler);
-                } catch (IllegalAccessException | InvocationTargetException e) { /* HANDLE THIS PLEASE */ }
 
-            } else {
-                /* Handle offline users */
+				} else { /* Assume player is offline */
 
-                System.out.println("Error while getting auth result: " + error);
-                try {
                     uniqueIdField.set(handler, OnflieIdUtil.onflieId(conn.getName()));
-                } catch(IllegalAccessException e) { /* HANDLE THIS MAYBE???? */ }
-            }
+				}
+			} catch (IllegalAccessException | InvocationTargetException e) {
+				conn.disconnect("Error while authenticating");
+
+				getInstance().getLogger().warning("Error while authenticating user:");
+				e.printStackTrace();
+			}
 
         };
 

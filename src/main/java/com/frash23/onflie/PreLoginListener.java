@@ -22,7 +22,7 @@ public class PreLoginListener implements Listener {
 
 		PendingConnection conn = e.getConnection();
 
-		//conn.setOnlineMode(false);
+		conn.setOnlineMode(false);
 		String username = conn.getName();
 
 		if( !username.matches("[a-zA-Z0-9_]{3,16}") ) { e.setCancelled(true); e.setCancelReason("Invalid usernam"); }
