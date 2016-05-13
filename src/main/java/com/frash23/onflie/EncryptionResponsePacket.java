@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
+import java.util.logging.Level;
 
 import static net.md_5.bungee.BungeeCord.getInstance;
 
@@ -86,16 +87,24 @@ public class EncryptionResponsePacket extends EncryptionResponse {
 			try {
 				if (error == null) { /* Assume player is online */
 					LoginResult obj = getInstance().gson.fromJson(result, LoginResult.class);
-					loginProfileField.set(handler, obj);
-                    if( !conn.isOnlineMode() ) conn.setOnlineMode(true);
-                    uniqueIdField.set(handler, Util.getUUID(obj.getId()));
 
-                    finishMethod.invoke(handler);
+					if(obj != null) {
+						loginProfileField.set(handler, obj);
+						if (!conn.isOnlineMode()) conn.setOnlineMode(true);
+						uniqueIdField.set(handler, Util.getUUID(obj.getId()));
+						System.out.println("Online user logged in");
+					} else {
+						uniqueIdField.set( handler, OnflieIdUtil.onflieId( conn.getName() ) );
+						System.out.println("Offline user logged in");
+					}
 
-				} else { /* Assume player is offline */
+					finishMethod.invoke(handler);
 
-                    uniqueIdField.set(handler, OnflieIdUtil.onflieId(conn.getName()));
+				} else {
+					conn.disconnect( getInstance().getTranslation("mojang_fail") );
+					getInstance().getLogger().log( Level.SEVERE, "Error authenticating " + conn.getName() + " with minecraft.net", error);
 				}
+
 			} catch (IllegalAccessException | InvocationTargetException e) {
 				conn.disconnect("Error while authenticating");
 

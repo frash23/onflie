@@ -1,5 +1,6 @@
 package com.frash23.onflie;
 
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.event.PreLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
@@ -25,8 +26,11 @@ public class PreLoginListener implements Listener {
 		conn.setOnlineMode(false);
 		String username = conn.getName();
 
-		if( !username.matches("[a-zA-Z0-9_]{3,16}") ) { e.setCancelled(true); e.setCancelReason("Invalid usernam"); }
-		else e.completeIntent(plugin);
+		if( !username.matches("[a-zA-Z0-9_]{3,16}") ) {
+			conn.disconnect( new TextComponent("Invalid username\nMust only contain letters a-Z, _ and numbers!") );
+			e.setCancelReason("Invalid username");
+			e.setCancelled(true);
+		} else e.completeIntent(plugin);
 	}
 
 }
