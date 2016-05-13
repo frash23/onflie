@@ -32,12 +32,12 @@ import static net.md_5.bungee.BungeeCord.getInstance;
 
 public class EncryptionResponsePacket extends EncryptionResponse {
 
-	static Field requestField;
-	static Field loginProfileField;
-	static Field thisStateField;
-	static Field uniqueIdField;
-	static Field chField;
-	static Method finishMethod;
+	private static Field requestField;
+	private static Field loginProfileField;
+	private static Field thisStateField;
+	private static Field uniqueIdField;
+	private static Field chField;
+	private static Method finishMethod;
 	private static boolean accessible = false;
 
 	static {

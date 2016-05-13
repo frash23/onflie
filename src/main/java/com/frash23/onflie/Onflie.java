@@ -20,11 +20,11 @@ public class Onflie extends Plugin {
 			throw new RuntimeException("Error while injecting auth packet", e);
 		}
 
-		System.out.println("hello friends what is up!!");
 		getProxy().getPluginManager().registerListener( this, new PreLoginListener(this) );
 		getProxy().getPluginManager().registerListener( this, new DebugListener(this) );
 	}
 
+	@SuppressWarnings("unchecked")
 	private void injectListener(int version) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {
 
 		Field protocolsField = Protocol.LOGIN.TO_SERVER.getClass().getDeclaredField("protocols");
